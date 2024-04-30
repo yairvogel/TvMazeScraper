@@ -44,8 +44,6 @@ internal static class IDataflowExtensions
         finally
         {
             target.Complete();
-            await target.Completion;
         }
-
     }
 }

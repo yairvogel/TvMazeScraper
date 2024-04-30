@@ -1,51 +1,55 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 using TvMaze.Client;
+using TvMaze.Interfaces;
+using TvMaze.MongoDb;
 using TvMaze.Scraper;
 
 TvmazeClient client = new();
+IDocumentDbClient dbClient = new LocalFileSystemDocumentDbClient();
 CancellationTokenSource cts = new();
 
-TransformManyBlock<int, ShowResponse> fetchShowBlock = new(async i =>
+var fetchShowBlock = new TransformManyBlock<int, ShowResponse>(GetShowsAsync, new() { MaxDegreeOfParallelism = 1, BoundedCapacity = 2 });
+var fetchCastBlock = new TransformBlock<ShowResponse, ShowResponseWithCast>(GetCastAsync, new() { MaxDegreeOfParallelism = 5, BoundedCapacity = 300 });
+var saveBlock = new ActionBlock<ShowResponseWithCast>(SaveToDbAsync, new() { MaxDegreeOfParallelism = 1 });
+
+using IDisposable link = fetchShowBlock.LinkTo(fetchCastBlock, new() { PropagateCompletion = true });
+using IDisposable link2 = fetchCastBlock.LinkTo(saveBlock, new() { PropagateCompletion = true });
+
+// we run to infinity until there are no more shows to fetch (we get a null response). We cancel the token when there are no more results.
+
+Stopwatch sw = Stopwatch.StartNew();
+IEnumerable<int> pagesToFetch = Enumerable.Range(30, 35);
+await fetchShowBlock.SendAllAsync(pagesToFetch, cts.Token);
+await saveBlock.Completion;
+
+async Task<IEnumerable<ShowResponse>> GetShowsAsync(int page)
 {
-    Console.WriteLine($"Fetching show {i}");
-    List<ShowResponse> shows = await client.GetShowsAsync(i, cts.Token);
+    List<ShowResponse> shows = await client.GetShowsAsync(page, cts.Token);
     if (shows.Count == 0)
     {
-        Console.WriteLine("No more shows to fetch");
         // no more shows to fetch, cancel the token
         cts.Cancel();
     }
     return shows;
-}, new() { MaxDegreeOfParallelism = 1, BoundedCapacity = 2 });
+}
 
-TransformBlock<ShowResponse, ShowResponseWithCast> fetchCastBlock = new(async show =>
+async Task<ShowResponseWithCast> GetCastAsync(ShowResponse show)
 {
-    Console.WriteLine($"Fetching cast for show {show.Id}");
-    List<Cast> cast = await client.GetCastAsync(show.Id, cts.Token) ;
+    List<Cast> cast = await client.GetCastAsync(show.Id, cts.Token);
     return new ShowResponseWithCast(show, cast);
-}, new() { MaxDegreeOfParallelism = 10, BoundedCapacity = 300 });
+}
 
-using IDisposable link = fetchShowBlock.LinkTo(fetchCastBlock, new() { PropagateCompletion = true });
-
-cts.CancelAfter(TimeSpan.FromSeconds(10));
-
-// we run to infinity until there are no more shows to fetch (we get a null response)
-IEnumerable<int> idsToFetch = CountToInfinity();
-Task sendTask = fetchShowBlock.SendAllAsync(idsToFetch, cts.Token);
-Task<List<ShowResponseWithCast>> toListTask = fetchCastBlock.ToListAsync();
-await Task.WhenAll(sendTask, toListTask);
-List<ShowResponseWithCast> list = toListTask.Result;
-
-Console.WriteLine(list.Count);
-Console.WriteLine(JsonSerializer.Serialize(list[..3], new() { WriteIndented = true }));
-
-static IEnumerable<int> CountToInfinity()
+Task SaveToDbAsync(ShowResponseWithCast showWithCast)
 {
-    int i = 0;
-    while (true)
+    return dbClient.SetItem(showWithCast.Show.Id.ToString(), showWithCast);
+}
+
+static IEnumerable<int> Count()
+{
+    for (int i = 0; i < int.MaxValue; i++)
     {
-        yield return i++;
+        yield return i;
     }
 }
 

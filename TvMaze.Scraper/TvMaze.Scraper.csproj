@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TvMaze.Client\TvMaze.Client.csproj" />
+    <ProjectReference Include="..\TvMaze.MongoDb\TvMaze.MongoDb.csproj" />
   </ItemGroup>
 
 </Project>
