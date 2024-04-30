@@ -17,6 +17,6 @@ ActionBlock<ShowResponseWithCast> saveBlock = new(scraper.SaveToDbAsync, new() {
 using IDisposable link = fetchShowBlock.LinkTo(fetchCastBlock, new() { PropagateCompletion = true });
 using IDisposable link2 = fetchCastBlock.LinkTo(saveBlock, new() { PropagateCompletion = true });
 
-IEnumerable<int> pagesToFetch = Enumerable.Range(30, 35);
+IEnumerable<int> pagesToFetch = [0];
 await fetchShowBlock.SendAllAndCancelAsync(pagesToFetch, cts.Token);
 await saveBlock.Completion;

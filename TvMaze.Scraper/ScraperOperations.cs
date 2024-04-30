@@ -18,14 +18,20 @@ public class ScraperOperations(CancellationTokenSource cts, TvmazeClient client,
 
     public async Task<ShowResponseWithCast> GetCastAsync(ShowResponse show)
     {
-        List<Cast> cast = await client.GetCastAsync(show.Id, cts.Token);
+        List<CastResponse> cast = await client.GetCastAsync(show.Id, cts.Token);
         return new ShowResponseWithCast(show, cast);
     }
 
-    public Task SaveToDbAsync(ShowResponseWithCast showWithCast)
+    public Task SaveToDbAsync(ShowResponseWithCast result)
     {
-        return dbClient.SetItem(showWithCast.Show.Id.ToString(), showWithCast);
+        Show show = new(
+            result.Show.Id,
+            result.Show.Name,
+            result.Cast.Select(c => new Cast(c.Person.Id, c.Person.Name, c.Person.Birthday)).ToList()
+        );
+
+        return dbClient.SetItem(show.Id.ToString(), show);
     }
 
-    public record ShowResponseWithCast(ShowResponse Show, List<Cast> Cast);
+    public record ShowResponseWithCast(ShowResponse Show, List<CastResponse> Cast);
 }

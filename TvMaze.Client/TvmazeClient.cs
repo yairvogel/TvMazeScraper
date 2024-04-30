@@ -22,9 +22,9 @@ public class TvmazeClient
         return await GetWithRetriesAsync<List<ShowResponse>>($"shows?page={page}", cancellationToken) ?? [];
     }
 
-    public async Task<List<Cast>> GetCastAsync(int showId, CancellationToken cancellationToken)
+    public async Task<List<CastResponse>> GetCastAsync(int showId, CancellationToken cancellationToken)
     {
-        return await GetWithRetriesAsync<List<Cast>>($"shows/{showId}/cast", cancellationToken) ?? [];
+        return await GetWithRetriesAsync<List<CastResponse>>($"shows/{showId}/cast", cancellationToken) ?? [];
     }
     
     private async Task<T?> GetWithRetriesAsync<T>(string url, CancellationToken cancellationToken)

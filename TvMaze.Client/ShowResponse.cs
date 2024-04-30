@@ -8,7 +8,7 @@ public record ShowResponse(
     string Name
 );
 
-public record Cast(Person Person);
+public record CastResponse(Person Person);
 
 public record Person(
     int Id,
