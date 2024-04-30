@@ -17,40 +17,49 @@ public class TvmazeClient
         };
     }
 
-    public async Task<ShowResponse?> GetShowAsync(int id, CancellationToken cancellationToken)
+    public async Task<List<ShowResponse>> GetShowsAsync(int page, CancellationToken cancellationToken)
+    {
+        return await GetWithRetriesAsync<List<ShowResponse>>($"shows?page={page}", cancellationToken) ?? [];
+    }
+
+    public async Task<List<Cast>> GetCastAsync(int showId, CancellationToken cancellationToken)
+    {
+        return await GetWithRetriesAsync<List<Cast>>($"shows/{showId}/cast", cancellationToken) ?? [];
+    }
+    
+    private async Task<T?> GetWithRetriesAsync<T>(string url, CancellationToken cancellationToken)
     {
         try
         {
-            return await GetShowWithRetriesAsync(id, cancellationToken);
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
+                }
+
+                using HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
+                Console.WriteLine($"Request to {url} returned {response.StatusCode}");
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
+                    case HttpStatusCode.NotFound:
+                        return default;
+                    case HttpStatusCode.ServiceUnavailable:
+                    case HttpStatusCode.TooManyRequests:
+                        // we don't use polly here because we want access to the response headers, which polly doesn't allow easily
+                        TimeSpan waitTime = response.Headers.RetryAfter?.Delta ?? _retryDelay;
+                        await Task.Delay(waitTime, cancellationToken);
+                        break;
+                    default:
+                        throw new HttpRequestException($"Unexpected status code: {response.StatusCode}");
+                }
+            }
         }
         catch (TaskCanceledException)
         {
-            Console.WriteLine("Task was canceled");
-            return null;
-        }
-    }
-
-    private async Task<ShowResponse?> GetShowWithRetriesAsync(int id, CancellationToken cancellationToken)
-    {
-        while (true)
-        {
-            using HttpResponseMessage response = await _httpClient.GetAsync($"shows/{id}?embed=cast", cancellationToken);
-            switch (response.StatusCode)
-            {
-                case HttpStatusCode.OK:
-                    return await response.Content.ReadFromJsonAsync<ShowResponse>(cancellationToken: cancellationToken);
-                case HttpStatusCode.NotFound:
-                    Console.WriteLine($"Show {id} not found");
-                    return null;
-                case HttpStatusCode.ServiceUnavailable:
-                case HttpStatusCode.TooManyRequests:
-                    // we don't use polly here because we want access to the response headers, which polly doesn't allow easily
-                    TimeSpan waitTime = response.Headers.RetryAfter?.Delta ?? _retryDelay;
-                    await Task.Delay(waitTime, cancellationToken);
-                    break;
-                default:
-                    throw new HttpRequestException($"Unexpected status code: {response.StatusCode}");
-            }
+            return default;
         }
     }
 }
