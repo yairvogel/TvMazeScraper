@@ -5,12 +5,14 @@ namespace TvMaze.Client;
 
 public class TvmazeClient
 {
+    private readonly bool _verbose;
     private readonly TimeSpan _retryDelay;
     private readonly HttpClient _httpClient;
 
-    public TvmazeClient(TimeSpan? retryDelay = null)
+    public TvmazeClient(TimeSpan retryDelay, bool verbose)
     {
-        _retryDelay = retryDelay ?? TimeSpan.FromMilliseconds(500);
+        _verbose = verbose;
+        _retryDelay = retryDelay;
         _httpClient = new HttpClient()
         {
             BaseAddress = new Uri("http://api.tvmaze.com/")
@@ -39,7 +41,11 @@ public class TvmazeClient
                 }
 
                 using HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
-                Console.WriteLine($"Request to {url} returned {response.StatusCode}");
+                if (_verbose)
+                {
+                    Console.WriteLine($"Request to {url} returned {response.StatusCode}");
+                }
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
