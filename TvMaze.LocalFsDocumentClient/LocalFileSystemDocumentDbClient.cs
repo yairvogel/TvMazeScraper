@@ -1,7 +1,7 @@
 using System.Text.Json;
 using TvMaze.Interfaces;
 
-namespace TvMaze.MongoDb;
+namespace TvMaze.LocalFsDocumentClient;
 public class LocalFileSystemDocumentDbClient : IDocumentDbClient
 {
     private readonly string _workDir;

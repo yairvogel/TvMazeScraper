@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks.Dataflow;
 using TvMaze.Client;
 using TvMaze.Interfaces;
-using TvMaze.MongoDb;
+using TvMaze.LocalFsDocumentClient;
 using TvMaze.Scraper;
 using static TvMaze.Scraper.ScraperOperations;
 
