@@ -25,7 +25,7 @@ internal static class IDataflowExtensions
         }
     }
 
-    internal static async Task SendAllAsync<T>(this ITargetBlock<T> target, IEnumerable<T> items, CancellationToken cancellationToken)
+    internal static async Task SendAllAndCancelAsync<T>(this ITargetBlock<T> target, IEnumerable<T> items, CancellationToken cancellationToken)
     {
         try
         {
@@ -35,6 +35,8 @@ internal static class IDataflowExtensions
                 {
                     break;
                 }
+
+                // send async allows backpressure caused by rate limiting
                 await target.SendAsync(i, cancellationToken);
             }
         }
