@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TvMaze.LocalFsDocumentClient\TvMaze.LocalFsDocumentClient.csproj" />
+    <ProjectReference Include="..\TvMaze.MongoDb\TvMaze.MongoDb.csproj" />
   </ItemGroup>
 
 </Project>
