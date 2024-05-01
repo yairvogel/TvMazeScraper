@@ -9,7 +9,7 @@ public class MongoDbDocumentClient(string connectionString) : IDocumentDbClient
 
     private const string _showCollectionName = "shows";
 
-    private readonly IMongoDatabase client = new MongoClient(connectionString).GetDatabase(Database);
+    private readonly IMongoDatabase database = new MongoClient(connectionString).GetDatabase(Database);
 
     /// <summary>
     /// initializes the database with the required collections, and returns a client to the initialized database
@@ -17,13 +17,13 @@ public class MongoDbDocumentClient(string connectionString) : IDocumentDbClient
     public static async Task<MongoDbDocumentClient> InitializeAsync(string connectionString)
     {
         MongoDbDocumentClient client = new(connectionString);
-        await client.client.CreateCollectionAsync(_showCollectionName);
+        await client.database.CreateCollectionAsync(_showCollectionName);
         return client;
     }
 
     public async Task<Show?> GetItem(int key)
     {
-        IMongoCollection<Show> collection = client.GetCollection<Show>(_showCollectionName);
+        IMongoCollection<Show> collection = database.GetCollection<Show>(_showCollectionName);
         FilterDefinition<Show> filter = Builders<Show>.Filter.Eq(show => show.Id, key);
         IAsyncCursor<Show> cursor = await collection.FindAsync(filter);
         return await cursor.FirstOrDefaultAsync();
@@ -31,7 +31,7 @@ public class MongoDbDocumentClient(string connectionString) : IDocumentDbClient
 
     public async Task<ICollection<Show>> GetItems(Range range)
     {
-        IMongoCollection<Show> collection = client.GetCollection<Show>(_showCollectionName);
+        IMongoCollection<Show> collection = database.GetCollection<Show>(_showCollectionName);
         FilterDefinition<Show> filter = Builders<Show>.Filter.And(
                 Builders<Show>.Filter.Gte(s => s.Id, range.Start.Value),
                 Builders<Show>.Filter.Lt(s => s.Id, range.End.Value));
@@ -40,8 +40,10 @@ public class MongoDbDocumentClient(string connectionString) : IDocumentDbClient
         return await cursor.ToListAsync();
     }
 
-    public Task<bool> SetItem(string key, Show item)
+    public async Task<bool> SetItem(string key, Show item)
     {
-        throw new NotImplementedException();
+        IMongoCollection<Show> collection = database.GetCollection<Show>(_showCollectionName);
+        await collection.InsertOneAsync(item);
+        return true;
     }
 }

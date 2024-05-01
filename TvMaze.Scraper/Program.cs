@@ -3,28 +3,31 @@ using System.Threading.Tasks.Dataflow;
 using TvMaze.Client;
 using TvMaze.Interfaces;
 using TvMaze.LocalFsDocumentClient;
+using TvMaze.MongoDb;
 using TvMaze.Scraper;
 using static TvMaze.Scraper.ScraperOperations;
 
 Option<bool> verbose = new("--verbose", "Enable verbose logging");
 Option<bool> sample = new("--sample", "Run the scraper for only a small sample");
+Option<string> mongodbConnectionString = new("--mongodb", "a mongodb connection string");
 
 var rootCommand = new RootCommand
 {
     verbose,
-    sample
+    sample,
+    mongodbConnectionString
 };
 
-rootCommand.SetHandler(Main, verbose, sample);
+rootCommand.SetHandler(Main, verbose, sample, mongodbConnectionString);
 
 await rootCommand.InvokeAsync(args);
 
-static async Task Main(bool verbose, bool sample)
+static async Task Main(bool verbose, bool sample, string mongoDbConnectionString)
 {
-    Console.WriteLine("Initializing scraper. verbose={0}, sample={1}", verbose, sample);
+    Console.WriteLine("Initializing scraper. verbose={0}, sample={1}, mongodbConnectionString={2}", verbose, sample, mongoDbConnectionString);
 
     TvmazeClient tvMazeClient = new(retryDelay: TimeSpan.FromMilliseconds(500), verbose);
-    IDocumentDbClient dbClient = new LocalFileSystemDocumentDbClient();
+    IDocumentDbClient dbClient = await GetDocumentDbClient(mongoDbConnectionString);
     CancellationTokenSource cts = new();
     ScraperOperations scraper = new(cts, tvMazeClient, dbClient, verbose);
 
@@ -38,6 +41,13 @@ static async Task Main(bool verbose, bool sample)
     IEnumerable<int> pagesToFetch = sample ? [0] : CountToInfinity();
     await fetchShowBlock.SendAllAndCancelAsync(pagesToFetch, cts.Token);
     await saveBlock.Completion;
+}
+
+static async Task<IDocumentDbClient> GetDocumentDbClient(string mongoDbConnectionString)
+{
+    return string.IsNullOrEmpty(mongoDbConnectionString)
+        ? new LocalFileSystemDocumentDbClient()
+        : await MongoDbDocumentClient.InitializeAsync(mongoDbConnectionString);
 }
 
 static IEnumerable<int> CountToInfinity()
