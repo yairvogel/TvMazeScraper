@@ -23,10 +23,28 @@ public class LocalFileSystemDocumentDbClient : IDocumentDbClient
         return true;
     }
 
-    public async Task<T?> GetItem<T>(string key)
+    public Task<T?> GetItem<T>(string key)
     {
         string collectionName = typeof(T).Name;
         string filePath = Path.Combine(_workDir, collectionName, key);
+        return DeserializeFile<T>(filePath);
+    }
+
+    public Task<T?[]> GetItems<T>(Range range)
+    {
+        string collectionName = typeof(T).Name;
+        string dirPath = Path.Combine(_workDir, collectionName);
+
+        int start = range.Start.Value;
+        int end = range.End.Value;
+        IEnumerable<Task<T?>> tasks = Enumerable.Range(start, end - start)
+            .Select(i => DeserializeFile<T>(Path.Combine(dirPath, i.ToString())));
+            
+        return Task.WhenAll(tasks);
+    }
+
+    private async Task<T?> DeserializeFile<T>(string filePath)
+    {
         if (!File.Exists(filePath))
         {
             return default;

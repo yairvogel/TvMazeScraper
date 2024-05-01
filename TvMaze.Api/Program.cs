@@ -11,7 +11,6 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.UseSwagger().UseSwaggerUI();
-app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
