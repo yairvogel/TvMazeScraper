@@ -2,9 +2,9 @@
 
 public interface IDocumentDbClient
 {
-    Task<bool> SetItem<T>(string key, T item);
+    Task<bool> SetItem(string key, Show item);
 
-    Task<T?> GetItem<T>(string key);
+    Task<Show?> GetItem(int key);
 
-    Task<T?[]> GetItems<T>(Range range);
+    Task<ICollection<Show>> GetItems(Range range);
 } 

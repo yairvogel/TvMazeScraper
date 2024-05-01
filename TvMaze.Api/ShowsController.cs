@@ -21,10 +21,10 @@ public class ShowsController(IDocumentDbClient documentDbClient) : ControllerBas
         int start = page * pageSize;
         int end = (page + 1) * pageSize;
 
-        Show?[] shows = await documentDbClient.GetItems<Show>(start..end);
+        ICollection<Show> shows = await documentDbClient.GetItems(start..end);
 
-        shows = shows.Where(s => s is not null).Select(s => WithSortedCast(s!, order)).ToArray();
-        return shows.Length > 0 ? Ok(shows) : NotFound();
+        shows = shows.Select(s => WithSortedCast(s, order)).ToArray();
+        return shows.Count > 0 ? Ok(shows) : NotFound();
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public class ShowsController(IDocumentDbClient documentDbClient) : ControllerBas
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetShowById(int id, string? order = null)
     {
-        Show? show = await documentDbClient.GetItem<Show>(id.ToString());
+        Show? show = await documentDbClient.GetItem(id);
 
         if (show is null)
         {

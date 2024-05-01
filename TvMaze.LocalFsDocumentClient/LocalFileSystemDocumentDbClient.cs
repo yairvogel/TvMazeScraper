@@ -4,6 +4,7 @@ using TvMaze.Interfaces;
 namespace TvMaze.LocalFsDocumentClient;
 public class LocalFileSystemDocumentDbClient : IDocumentDbClient
 {
+    private const string _showDirectory = "shows";
     private readonly string _workDir;
 
     public LocalFileSystemDocumentDbClient()
@@ -14,33 +15,31 @@ public class LocalFileSystemDocumentDbClient : IDocumentDbClient
         Directory.CreateDirectory(_workDir);
     }
 
-    public async Task<bool> SetItem<T>(string key, T item)
+    public async Task<bool> SetItem(string key, Show item)
     {
-        string collectionName = typeof(T).Name;
-        Directory.CreateDirectory(Path.Combine(_workDir, collectionName));
-        await using FileStream fileStream = File.Create(Path.Combine(_workDir, collectionName, key));
+        Directory.CreateDirectory(Path.Combine(_workDir, _showDirectory));
+        await using FileStream fileStream = File.Create(Path.Combine(_workDir, _showDirectory, key));
         await fileStream.WriteAsync(JsonSerializer.SerializeToUtf8Bytes(item));
         return true;
     }
 
-    public Task<T?> GetItem<T>(string key)
+    public Task<Show?> GetItem(int key)
     {
-        string collectionName = typeof(T).Name;
-        string filePath = Path.Combine(_workDir, collectionName, key);
-        return DeserializeFile<T>(filePath);
+        string filePath = Path.Combine(_workDir, _showDirectory, key.ToString());
+        return DeserializeFile<Show>(filePath);
     }
 
-    public Task<T?[]> GetItems<T>(Range range)
+    public async Task<ICollection<Show>> GetItems(Range range)
     {
-        string collectionName = typeof(T).Name;
-        string dirPath = Path.Combine(_workDir, collectionName);
+        string dirPath = Path.Combine(_workDir, _showDirectory);
 
         int start = range.Start.Value;
         int end = range.End.Value;
-        IEnumerable<Task<T?>> tasks = Enumerable.Range(start, end - start)
-            .Select(i => DeserializeFile<T>(Path.Combine(dirPath, i.ToString())));
+        IEnumerable<Task<Show?>> tasks = Enumerable.Range(start, end - start)
+            .Select(i => DeserializeFile<Show>(Path.Combine(dirPath, i.ToString())));
             
-        return Task.WhenAll(tasks);
+        var results = await Task.WhenAll(tasks);
+        return results.Where(s => s is not null).Cast<Show>().ToList();
     }
 
     private async Task<T?> DeserializeFile<T>(string filePath)

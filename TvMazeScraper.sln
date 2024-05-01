@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TvMaze.Interfaces", "TvMaze
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TvMaze.Api", "TvMaze.Api\TvMaze.Api.csproj", "{96DAD243-396B-4AB0-94BF-1E18D424D31A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TvMaze.MongoDb", "TvMaze.MongoDb\TvMaze.MongoDb.csproj", "{D2FB4C93-8FA6-4A93-A058-040A654DFDFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{96DAD243-396B-4AB0-94BF-1E18D424D31A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96DAD243-396B-4AB0-94BF-1E18D424D31A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96DAD243-396B-4AB0-94BF-1E18D424D31A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2FB4C93-8FA6-4A93-A058-040A654DFDFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2FB4C93-8FA6-4A93-A058-040A654DFDFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2FB4C93-8FA6-4A93-A058-040A654DFDFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2FB4C93-8FA6-4A93-A058-040A654DFDFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
