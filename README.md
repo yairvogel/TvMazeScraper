@@ -17,7 +17,7 @@ Run `dotnet run --project TvMaze.Scraper`
 
 The scraper accepts some command line arguments, including a *verbose* flag for verbose logging and a *sample* flag for a short test run of ~250 shows.
 
-The scraper runs on the local filesystem by default. To use mongo db as a database provider, provide a mongodb connection string, for example `--mongodb=mongo+srv://localhost:27017/`
+The scraper runs on the local filesystem by default. To use mongo db as a database provider, provide a mongodb connection string, for example `--mongodb=mongo://localhost:27017/`
 
 Run `dotnet run --project TvMaze.Scraper -- --help` for more information
 
@@ -27,7 +27,10 @@ Run `dotnet run --project TvMaze.Scraper -- --help` for more information
 
 Run `dotnet run --project TvMaze.Api`
 
-The API runs on the local filesystem by default. To use mongo db as a database provider, provide a mongodb connection string as a command line argumeent, for example `--mongodb=mongo+srv://localhost:27017/`
+The API runs on the local filesystem by default. To use mongo db as a database provider, provide a mongodb connection string as a command line argumeent, for example `--mongodb=mongo://localhost:27017/`
 
 The api will listen to port 5035 by default.
 The api uses swagger. To see all available endpoints visit [http://localhost:5035/swagger/](http://localhost:5035/swagger/)
+
+#### notes
+- The fetch endpoints supprt ordering of the cast by birtyday. Acceptable values are "asc" for ascending order or "desc" for descending order
